@@ -1,58 +1,84 @@
 <!DOCTYPE html>
 <html>
 <head>
+  <meta charset="UTF-8">
+  <title>Location Sharing for Research</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Share Your Location</title>
   <style>
-    body { font-family: Arial; text-align: center; padding: 50px; }
-    button { padding: 15px 25px; font-size: 18px; }
-    #output { margin-top: 20px; }
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      padding: 50px;
+      background: #f4f4f4;
+    }
+    button {
+      padding: 15px 25px;
+      font-size: 18px;
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #45a049;
+    }
+    #output {
+      margin-top: 30px;
+      font-size: 16px;
+      white-space: pre-line;
+    }
   </style>
 </head>
 <body>
-  <h2>Click the Button to Share Your Location</h2>
-  <button onclick="getLocation()">📍 Share Location</button>
-  <p id="output"></p>
+  <h2>📍 Share Your Location</h2>
+  <p>For our university research project, please click below to share your location. Thank you!</p>
+
+  <button onclick="getLocation()">Share Location</button>
+
+  <div id="output"></div>
 
   <script>
     function getLocation() {
-      if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(showPosition, showError);
-      } else {
-        document.getElementById("output").innerText = "Geolocation not supported on your device.";
+      const output = document.getElementById("output");
+
+      if (!navigator.geolocation) {
+        output.innerText = "Geolocation is not supported by your browser.";
+        return;
       }
-    }
 
-    function showPosition(position) {
-      const lat = position.coords.latitude;
-      const lon = position.coords.longitude;
-      document.getElementById("output").innerText = 
-        "Latitude: " + lat + "\nLongitude: " + lon;
+      output.innerText = "Requesting location...";
 
-      // Optional: Send to your backend for logging
-      fetch("https://your-server.com/location", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ lat, lon, timestamp: new Date().toISOString() })
-      });
-    }
+      navigator.geolocation.getCurrentPosition(
+        position => {
+          const lat = position.coords.latitude;
+          const lon = position.coords.longitude;
+          const timestamp = new Date().toISOString();
+          const userAgent = navigator.userAgent;
 
-    function showError(error) {
-      switch(error.code) {
-        case error.PERMISSION_DENIED:
-          alert("You denied the request for Geolocation.");
-          break;
-        case error.POSITION_UNAVAILABLE:
-          alert("Location information is unavailable.");
-          break;
-        case error.TIMEOUT:
-          alert("The request to get your location timed out.");
-          break;
-        default:
-          alert("An unknown error occurred.");
-          break;
-      }
-    }
-  </script>
-</body>
-</html>
+          output.innerText = `Latitude: ${lat}\nLongitude: ${lon}\nTimestamp: ${timestamp}`;
+
+          // OPTIONAL: Send data to Google Sheets or your backend
+          fetch("https://YOUR_WEBHOOK_URL_HERE", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+              lat,
+              lon,
+              timestamp,
+              userAgent
+            })
+          }).then(res => {
+            console.log("Location sent successfully");
+          }).catch(err => {
+            console.error("Error sending location:", err);
+          });
+        },
+        error => {
+          switch (error.code) {
+            case error.PERMISSION_DENIED:
+              output.innerText = "Permission denied. Please allow location access.";
+              break;
+            ca
